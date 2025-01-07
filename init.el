@@ -10,7 +10,6 @@
 (if (fboundp 'set-fringe-mode)
     (set-fringe-mode -1))
 
-
 (setq visible-bell t)
 
 (set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
@@ -78,6 +77,11 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
@@ -87,4 +91,37 @@
   :config
   (setq which-key-idle-delay 0.1))
 
-(use-package magit)
+(use-package company
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-capf)
+  (global-company-mode))
+
+(use-package magit
+  :ensure t)
+
+(use-package dumb-jump
+  :ensure t)
+
+(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+
+(use-package lsp-mode
+  :ensure t
+  :hook ((c-mode . lsp)
+	 (c++-mode . lsp)
+	 (pythom-mode . lsp))
+  :commands lsp)
+
+;; optionally
+(use-package lsp-ui :commands lsp-ui-mode)
+
+
+(use-package flycheck
+  :ensure t
+  :config
+  (add-hook 'after-init-hook #'global-flycheck-mode))
+
+(use-package all-the-icons)
+(use-package neotree
+  :ensure t)
+(global-set-key [f8] 'neotree-toggle)
