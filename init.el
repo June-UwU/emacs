@@ -65,13 +65,16 @@
     (doom-themes-org-config))
 
 (use-package nerd-icons
+  :ensure t
+  :config
+  (set-frame-font "Fira Code Retina" nil t)
+  (setq nerd-icons-font-family "Fira Code Retina")
   ;; :custom
   ;; The Nerd Font you want to use in GUI
   ;; "Symbols Nerd Font Mono" is the default and is recommended
   ;; but you can use any other Nerd Font if you want
   ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
-    )
-(require 'nerd-icons)
+  )
 
 (use-package doom-modeline
   :ensure t
@@ -125,3 +128,4 @@
 (use-package neotree
   :ensure t)
 (global-set-key [f8] 'neotree-toggle)
+
