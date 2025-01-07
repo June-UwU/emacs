@@ -10,6 +10,9 @@
 (if (fboundp 'set-fringe-mode)
     (set-fringe-mode -1))
 
+(normal-erase-is-backspace-mode 0)
+(setq make-backup-files nil)
+
 (setq visible-bell t)
 
 (set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
@@ -65,13 +68,16 @@
     (doom-themes-org-config))
 
 (use-package nerd-icons
+  :ensure t
+  :config
+  (set-frame-font "Fira Code Retina" nil t)
+  (setq nerd-icons-font-family "Fira Code Retina")
   ;; :custom
   ;; The Nerd Font you want to use in GUI
   ;; "Symbols Nerd Font Mono" is the default and is recommended
   ;; but you can use any other Nerd Font if you want
   ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
-    )
-(require 'nerd-icons)
+  )
 
 (use-package doom-modeline
   :ensure t
@@ -115,6 +121,14 @@
 ;; optionally
 (use-package lsp-ui :commands lsp-ui-mode)
 
+(use-package projectile
+  :ensure t
+  :config
+  (projectile-mode +1)
+  ;; Optional: use Projectile with completion system like Ivy
+  ;; (setq projectile-completion-system 'ivy)
+  ;; Optional: key bindings
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 
 (use-package flycheck
   :ensure t
@@ -125,3 +139,16 @@
 (use-package neotree
   :ensure t)
 (global-set-key [f8] 'neotree-toggle)
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages nil))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
