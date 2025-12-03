@@ -1,13 +1,24 @@
 ;; -------------------------------
 ;; Basic Emacs Configuration
 ;; -------------------------------
+(setq make-backup-files nil) ; stop creating ~ files(setq package-check-signature nil)
+(setq inhibit-startup-message t)
+(if (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+(if (fboundp 'tool-bar-mode)
+    (tool-bar-mode -1))
+(if (fboundp 'tooltip-mode)
+    (tooltip-mode -1))
+(if (fboundp 'menu-bar-mode)
+    (menu-bar-mode -1))
+(if (fboundp 'set-fringe-mode)
+    (set-fringe-mode -1))
 
 ;; Disable startup screen
 (setq inhibit-startup-screen t)
 
 ;; Set default font and theme (optional)
 (set-face-attribute 'default nil :height 120)
-(load-theme 'wombat t)
 
 ;; Make cursor a thin vertical bar
 (setq-default cursor-type 'bar)
@@ -93,120 +104,79 @@
 ;; bind-key: cleaner keybinding declarations
 (use-package bind-key)
 
-(use-package cursory
+(use-package doom-themes
   :ensure t
-  :demand t
-  :if (display-graphic-p)
   :config
-  (setq cursory-presets
-        '((box
-           :cursor-color success ; will typically be green
-           :blink-cursor-interval 1.2)
-          (box-no-blink
-           :inherit box
-           :blink-cursor-mode -1)
-          (bar
-           :cursor-type (bar . 2)
-           :cursor-color error ; will typically be red
-           :blink-cursor-interval 0.8)
-          (bar-no-other-window
-           :inherit bar
-           :cursor-in-non-selected-windows nil)
-          (bar-no-blink
-           :inherit bar
-           :blink-cursor-mode -1)
-          (underscore
-           :cursor-color warning ; will typically be yellow
-           :cursor-type (hbar . 3)
-           :blink-cursor-interval 0.3
-           :blink-cursor-blinks 50)
-          (underscore-no-other-window
-           :inherit underscore
-           :cursor-in-non-selected-windows nil)
-          (underscore-thick
-           :inherit underscore
-           :cursor-type (hbar . 8)
-           :cursor-in-non-selected-windows (hbar . 3))
-          (t ; the default values
-           :cursor-color unspecified ; use the theme's original
-           :cursor-type box
-           :cursor-in-non-selected-windows hollow
-           :blink-cursor-mode 1
-           :blink-cursor-blinks 10
-           :blink-cursor-interval 0.2
-           :blink-cursor-delay 0.2)))
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+	doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one t)
 
-  ;; I am using the default value of `cursory-latest-state-file'.
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-tokyo-nightev") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 
-  ;; Set last preset or fall back to desired style from
-  ;; `cursory-presets'.  Alternatively, use the function
-  ;; `cursory-set-last-or-fallback' (can be added to the
-  ;; `after-init-hook'.
-  (cursory-set-preset (or (cursory-restore-latest-preset) 'box))
+(use-package nerd-icons
+  :ensure t
+  :config
+  (set-frame-font "Fira Code Retina" nil t)
+  (setq nerd-icons-font-family "Fira Code Retina")
+  ;; :custom
+  ;; The Nerd Font you want to use in GUI
+  ;; "Symbols Nerd Font Mono" is the default and is recommended
+  ;; but you can use any other Nerd Font if you want
+  ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
+  )
 
-  ;; Persist configurations between Emacs sessions.  Also apply the
-  ;; :cursor-color again when swithcing to another theme.
-  (cursory-mode 1))
-;; -------------------------------
-;; Optional: UI Tweaks
-;; -------------------------------
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
 
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package lsp-mode
+  :ensure t
+  :hook ((c-mode . lsp)
+	 (c++-mode . lsp)
+	 (pythom-mode . lsp))
+  :commands lsp)
+
+(use-package neotree
+  :ensure t)
+(global-set-key [f8] 'neotree-toggle)
+
+(use-package lsp-ui :commands lsp-ui-mode)
+
+(use-package flycheck
+  :ensure t
+  :config
+  (add-hook 'after-init-hook #'global-flycheck-mode))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages '(consult cursory magit projectile-ripgrep vertico xcscope)))
+ '(package-selected-packages
+   '(consult cursory doom-modeline doom-themes flycheck lsp-ui magit
+	     neotree orderless projectile-ripgrep rainbow-delimiters
+	     vertico xcscope)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-(defun my/generate-and-propagate-cscope-db ()
-  "Generate cscope database in the project root and copy cscope.out into every subdirectory.
-Project root is taken from `projectile-project-root' if available, otherwise `default-directory'.
-Skips .git, .svn, .hg, node_modules, build, dist directories."
-  (interactive)
-  (let* ((root (or (and (fboundp 'projectile-project-root) (projectile-project-root))
-                   default-directory))
-         (db-file "cscope.out")
-         (files-cmd "find . \\( -name \"*.c\" -o -name \"*.cc\" -o -name \"*.cpp\" -o -name \"*.cxx\" -o -name \"*.hpp\" \\) > cscope.files")
-         ;; copy command: find all dirs, exclude common dirs, then copy cscope.out into each dir
-         (copy-cmd "find . -type d \\( -path './.git' -o -path './.git/*' -o -path './.svn' -o -path './.svn/*' -o -path './.hg' -o -path './.hg/*' -o -path './node_modules' -o -path './node_modules/*' -o -path './build' -o -path './build/*' -o -path './dist' -o -path './dist/*' \\) -prune -o -type d -print0 | xargs -0 -I{} cp -f ./cscope.out \"{}\"")
-    (unless (and root (file-directory-p root))
-      (user-error "Project root not found"))
-    (let ((default-directory (file-name-as-directory root)))
-      ;; generate file list
-      (with-current-buffer (get-buffer-create "*cscope-build*")
-        (erase-buffer))
-      (let ((rc1 (call-process-shell-command files-cmd nil "*cscope-build*" t)))
-        (unless (zerop rc1)
-          (message "Failed to generate cscope.files (exit %d). See *cscope-build*." rc1)
-          (pop-to-buffer "*cscope-build*")
-          (cl-return-from my/generate-and-propagate-cscope-db nil)))
-      ;; run cscope build
-      (with-current-buffer (get-buffer-create "*cscope-build*")
-        (goto-char (point-max)))
-      (let ((rc2 (call-process-shell-command "cscope -b -q -k" nil "*cscope-build*" t)))
-        (unless (and (zerop rc2) (file-exists-p (expand-file-name db-file default-directory)))
-          (message "cscope build failed (exit %d) or %s missing. See *cscope-build*." rc2 db-file)
-          (pop-to-buffer "*cscope-build*")
-          (cl-return-from my/generate-and-propagate-cscope-db nil)))
-      ;; propagate
-      (with-current-buffer (get-buffer-create "*cscope-propagate*")
-        (erase-buffer))
-      (let ((rc3 (call-process-shell-command copy-cmd nil "*cscope-propagate*" t)))
-        (if (zerop rc3)
-            (progn
-              (message "cscope.out generated and propagated to subdirectories under %s" root)
-              t)
-          (message "Propagation failed (exit %d). See *cscope-propagate*." rc3)
-          (pop-to-buffer "*cscope-propagate*")
-          nil)))))
-
-(global-set-key (kbd "M-g") #'my/generate-and-propagate-cscope-db)
