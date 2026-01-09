@@ -1,3 +1,4 @@
+
 ;; -------------------------------
 ;; Basic Emacs Configuration
 ;; -------------------------------
@@ -14,11 +15,9 @@
 (if (fboundp 'set-fringe-mode)
     (set-fringe-mode -1))
 
+(set-face-attribute 'default nil :height 120)
 ;; Disable startup screen
 (setq inhibit-startup-screen t)
-
-;; Set default font and theme (optional)
-(set-face-attribute 'default nil :height 120)
 
 ;; Make cursor a thin vertical bar
 (setq-default cursor-type 'bar)
@@ -92,6 +91,7 @@
   :after projectile
   :bind (:map projectile-command-map
               ("s r" . projectile-ripgrep)))
+
 (use-package xcscope
   :ensure t
   :config
@@ -110,7 +110,7 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
 	doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
+  (load-theme 'doom-dracula t)
 
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
@@ -147,18 +147,37 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
+(use-package rustic
+  :mode ("\\.rs\\'" . rustic-mode)
+  :config
+  ;; Use lsp-mode as the LSP client (ensure lsp-mode is installed below)
+  (setq rustic-lsp-client 'lsp-mode)
+  ;; Format code on every save automatically
+  (setq rustic-format-on-save t)
+  :bind (:map rustic-mode-map
+              ("C-c C-c C-r" . rustic-cargo-run)
+              ("C-c C-c C-t" . rustic-cargo-test)))
+
 (use-package lsp-mode
   :ensure t
   :hook ((c-mode . lsp)
 	 (c++-mode . lsp)
-	 (pythom-mode . lsp))
+	 (python-mode . lsp)
+	 (rustic-mode . lsp-deferred))
+  :config
+  ;; Modern 2026 settings moved to :config to avoid :custom errors
+  (setq lsp-idle-delay 0.2)
+  (setq lsp-rust-analyzer-display-inlay-hints t)
+  (setq lsp-eldoc-render-all t)
   :commands lsp)
 
 (use-package neotree
   :ensure t)
 (global-set-key [f8] 'neotree-toggle)
 
-(use-package lsp-ui :commands lsp-ui-mode)
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :hook (lsp-mode . lsp-ui-mode))
 
 (use-package flycheck
   :ensure t
@@ -173,7 +192,7 @@
  '(package-selected-packages
    '(consult cursory doom-modeline doom-themes flycheck lsp-ui magit
 	     neotree orderless projectile-ripgrep rainbow-delimiters
-	     vertico xcscope)))
+	     rustic vertico xcscope xterm-color)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
